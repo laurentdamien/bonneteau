@@ -1,0 +1,9 @@
+$screen-breakpoints : (
+		xxs    : 320px, // rarely used, most styles applicable here will not use a media query (mobile first)
+		xs     : 550px,
+		s      : 750px,
+		m      : 980px,
+		l      : 1200px,
+		xl     : 1400px,
+		xxl    : 1600px
+);

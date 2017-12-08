@@ -1,0 +1,267 @@
+/* ========
+
+   Mixins
+
+ ======== */
+
+
+@mixin font-face($family, $weight: $font-weight-regular, $style: 'normal') {
+
+	@font-face {
+		font-family: $family;
+		font-weight: $weight;
+		font-style: $style;
+		src: url('../fonts/#{$family}-#{$weight}-#{$style}.woff'),
+		     url('../fonts/#{$family}-#{$weight}-#{$style}.woff2');
+	}
+
+}
+
+
+/**
+
+Screen Size Media Query Mixins
+
+**/
+
+@mixin min-width($breakpoint-name, $extra : null) {
+	@if (map-has-key($screen-breakpoints, $breakpoint-name)) { // Check breakpoint exists
+
+		@if ($extra) {
+
+			@media screen and (min-width: map-get($screen-breakpoints, $breakpoint-name)) and #{$extra} {
+				@content;
+			}
+
+		} @else {
+
+			@media screen and (min-width: map-get($screen-breakpoints, $breakpoint-name)) {
+				@content;
+			}
+
+		}
+
+	} @else {
+		@warn "Couldn't find breakpoint named : "+$breakpoint-name
+	}
+}
+
+@mixin max-width($breakpoint-name, $extra: null) {
+	@if (map-has-key($screen-breakpoints, $breakpoint-name)) { // Check breakpoint exists
+
+		@if ($extra) {
+			@media screen and (max-width: map-get($screen-breakpoints, $breakpoint-name)) and #{$extra} {
+				@content;
+			}
+		} @else {
+			@media screen and (max-width: map-get($screen-breakpoints, $breakpoint-name)) {
+				@content;
+			}
+		}
+
+	} @else {
+		@warn "Couldn't find breakpoint named : "+$breakpoint-name
+	}
+}
+
+/**
+* Like max width, but offsets by a pixel to avoid a min-width and max-width from matching at the same time
+*/
+@mixin below($breakpoint-name, $extra : null) {
+	@if (map-has-key($screen-breakpoints, $breakpoint-name)) { // Check breakpoint exists
+
+		@if ($extra) {
+			@media screen and (max-width: map-get($screen-breakpoints, $breakpoint-name) - 1px) and #{$extra} {
+				@content;
+			}
+		} @else {
+			@media screen and (max-width: map-get($screen-breakpoints, $breakpoint-name) - 1px) {
+				@content;
+			}
+		}
+
+	} @else {
+		@warn "Couldn't find breakpoint named : "+$breakpoint-name;
+	}
+}
+
+/*
+
+Screen resolution mixin
+
+*/
+
+@mixin hidpi($res) {
+	@media screen and (min-aspect-ratio: $res),
+	screen and (min-resolution: ($res * 96dpi)) {
+		@content;
+	}
+}
+
+/**
+Text selection mixin
+*/
+@mixin selection {
+	::-moz-selection {
+		@content;
+	}
+
+	::selection {
+		@content;
+	}
+}
+
+/*
+Form placeholder mixin
+*/
+@mixin placeholder {
+	&::-webkit-input-placeholder {
+		@content
+	}
+	&:-moz-placeholder {
+		@content
+	}
+	&::-moz-placeholder {
+		@content
+	}
+	&:-ms-input-placeholder {
+		@content
+	}
+}
+
+/*
+Keyframe animation cross-browser (autoprefixer doesn't handle this well)
+*/
+@mixin animation($str) {
+	-webkit-animation: #{$str};
+	-moz-animation: #{$str};
+	-ms-animation: #{$str};
+	-o-animation: #{$str};
+	animation: #{$str};
+}
+
+/*
+
+Aspect ratio mixin. can accept width and height or just the ratio
+
+Relies on a floated element's padding
+
+found at http://codepen.io/jakob-e/pen/LEdWNB?editors=110 linked to from https://css-tricks.com/snippets/sass/maintain-aspect-ratio-mixin/
+
+*/
+
+@mixin aspect-ratio($ratio-or-width, $height: null) {
+	$padding: if($height, percentage($height/$ratio-or-width), percentage(1/$ratio-or-width));
+	&:before {
+		content: '';
+		display: block;
+		float: left;
+		padding-bottom: $padding;
+	}
+	&:after {
+		content: '';
+		display: table;
+		clear: both;
+	}
+}
+
+// for use inside media queries
+@mixin clearfix {
+	&::after {
+		content: "";
+		display: table;
+		clear: both;
+	}
+}
+
+@mixin font-smoothing($enabled : true) {
+	@if ($enabled is true) {
+		-webkit-font-smoothing: antialiased;
+		-moz-osx-font-smoothing: grayscale;
+	} @else {
+		-webkit-font-smoothing: auto;
+		-moz-osx-font-smoothing: auto;
+	}
+}
+
+// visibility / opacity fade out trick
+@mixin fade-out( $duration : 250ms, $delay : 0ms ) {
+
+	transition: opacity    $duration    ease-out    #{0ms + $delay},
+				visibility 0ms          linear      #{$duration + $delay};
+
+	opacity: 0;
+	visibility: hidden;
+}
+
+// visibility / opacity fade in trick
+@mixin fade-in($duration : 250ms, $delay : 0ms) {
+
+	transition: opacity     $duration   ease-out    $delay,
+				visibility  0ms         linear      $delay;
+
+	opacity: 1;
+	visibility: visible;
+
+}
+
+/* ========
+
+   Functions
+
+ ======== */
+
+@function em($pixels, $context: 16px) {
+	@if (unitless($pixels)) {
+		$pixels: $pixels * 1px;
+	}
+
+	@if (unitless($context)) {
+		$context: $context * 1px;
+	}
+
+	@return $pixels / $context * 1em;
+}
+
+@function z($layer) {
+	@if not map-has-key($z-layers, $layer) {
+		@warn "No layer found for `#{$layer}` in $z-layers map. Property omitted.";
+	}
+
+	@return map-get($z-layers, $layer);
+}
+
+/* ========
+
+   Helper classes
+
+ ======== */
+
+// Responsive line break & show/hide helpers
+@each $bp in map-keys($screen-breakpoints) {
+
+	// line breaks
+	br.max-width-#{$bp},
+	br.min-width-#{$bp},
+	br.below-#{$bp} {
+		display: none;
+	}
+
+	@include max-width($bp) {
+		br.max-width-#{$bp} {
+			display: block;
+		}
+	}
+
+	@include min-width($bp) {
+		br.min-width-#{$bp} {
+			display: block;
+		}
+	}
+
+	@include below($bp) {
+		br.below-#{$bp} {
+			display: block;
+		}
+	}
+}

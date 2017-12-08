@@ -1,0 +1,31 @@
+$content-width-xxs : 87.5%;
+
+$career-slider-item-width: 250px;
+$career-slider-item-margin: 50px;
+
+$draw-header-height-xxs : 70px;
+
+$value-wheel-radius : 250px;
+$values-wheel-radius-small: 170px;
+$value-wheel-label-margin : 50px;
+
+$header-height-deployed-xxs : 155px;
+$header-height-collapsed-xxs : 70px;
+
+
+/*
+
+Positions... IN THE THIRD DIMENSION !
+
+...I didn't know where else to put these.
+
+ */
+
+$z-layers : (
+		'page-draw'             : 1200,
+		'page-draw-overlay'     : 1100,
+		'page-draw-loader'      : 1150,
+		'header'                : 1000,
+		'butterflues'           : 900,
+		'career-slider'         : 800
+)
