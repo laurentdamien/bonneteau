@@ -15,11 +15,14 @@ html {
 
 body {
     font-weight: normal;
-    padding-top: $header-height-deployed-xxs;
 }
 
 .page-container {
     position: relative;
+    text-align: center;
+    width: 90%;
+    max-width: $max-content;
+    margin: 50px auto;
 }
 
 /*

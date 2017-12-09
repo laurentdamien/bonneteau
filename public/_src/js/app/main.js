@@ -4,8 +4,6 @@ import anime from "animejs";
 import WindowManager from 'zimplist/utils/WindowManager';
 import Config from 'zimplist/utils/Config';
 
-import pageList from 'app/pages/pageList';
-
 // Create main object
 const BONNETEAU = {
     start() {

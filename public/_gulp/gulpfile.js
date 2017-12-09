@@ -31,7 +31,6 @@ const autoprefixer        = require('autoprefixer');
 const postcss             = require('gulp-postcss');
 const csswring            = require('csswring');
 const stripCssComments    = require('gulp-strip-css-comments');
-const objectFit           = require('postcss-object-fit-images');
 
 // General purpose
 const rename              = require('gulp-rename');
@@ -42,11 +41,6 @@ const sourcemaps          = require('gulp-sourcemaps');
 const browserSync         = require('browser-sync').create();
 const sequence            = require('gulp-sequence').use( gulp );
 
-const svgMin              = require('gulp-svgmin');
-const svgStore            = require('gulp-svgstore');
-// const spritesmith         = require('gulp.spritesmith');
-
-// const mustache            = require('mustache');
 const del                 = require('del');
 
 
@@ -144,15 +138,12 @@ function bundleScripts(watch) {
     // function that returns a bundler stream (IE. an active bundling operation)
     function rebundle() {
 
-        // gulpUtil.log('Bundling scripts');
-
         return bundler
             .bundle()
             .on('error', notify.onError("Browserify Error : <%= error.message %>") )
-            .pipe( source('vca-scripts.js') )
+            .pipe( source('scripts.js') )
             .pipe( gulp.dest(dir.dist+'js') )
             .pipe( browserSync.stream() );
-
     }
 
     // return a first bundling stream (note we are not returning the rebundle function, but the string of streams that rebundle itself returns
@@ -166,9 +157,9 @@ gulp.task('scripts', () => {
 
 gulp.task('min-scripts', ['scripts'], () => {
 
-    return gulp.src( `${dir.dist}js/vca-scripts.js`)
+    return gulp.src( `${dir.dist}js/scripts.js`)
         .pipe( uglify() )
-        .pipe( rename('vca-scripts.min.js') )
+        .pipe( rename('scripts.min.js') )
         .pipe( gulp.dest(dir.dist+'js') );
 
 });
@@ -213,7 +204,7 @@ function bundleScriptsEs6(minify = false) {
 
         // append sourcemap comment to the code and write the file
         let output = code + "\n //# sourceMappingURL=" + map.toUrl();
-        fs.writeFileSync(`${dir.dist}js/vca-scripts.es6.js`, output);
+        fs.writeFileSync(`${dir.dist}js/scripts.es6.js`, output);
 
         // Minify output for prod (without sourcemaps this time)
         if (minify) {
@@ -223,7 +214,7 @@ function bundleScriptsEs6(minify = false) {
             if (minified.error) {
                 throw new Error( minified.error.message );
             } else {
-                fs.writeFileSync(`${dir.dist}js/vca-scripts.es6.min.js`, minified.code);
+                fs.writeFileSync(`${dir.dist}js/scripts.es6.min.js`, minified.code);
             }
 
         }
@@ -234,7 +225,6 @@ function bundleScriptsEs6(minify = false) {
 }
 
 gulp.task('scripts-es6', () => {
-    console.log('Bundling ES6 scripts');
     return bundleScriptsEs6(false);
 });
 
@@ -254,8 +244,7 @@ gulp.task('styles', () => {
     let processors = [
         autoprefixer({
             browsers : ['last 2 versions','> 2%','ie 11']
-        }),
-        objectFit, // needed for the object-fit polyfill
+        })
     ];
 
     return gulp.src( `${dir.src}scss/*.scss`)
@@ -276,111 +265,6 @@ gulp.task('styles', () => {
 
 });
 
-
-
-
-
-/*
-
-    IMAGES
-
-*/
-
-gulp.task('svg-min', () => {
-
-    return gulp.src( `${dir.src}img/svg/**/*.svg`)
-        .pipe( svgMin({
-            plugins : [
-                {
-                    removeTitle : true
-                },
-                {
-                    removeDoctype : true
-                },
-                {
-                    removeComments : true
-                },
-                {
-                    removeDimensions : true
-                }
-            ]
-        }) )
-        .pipe( gulp.dest(`${dir.dist}img/svg/`) );
-
-});
-
-
-gulp.task('svg-sprite', ['svg-min'], () => {
-
-    return gulp.src( `${dir.dist}/img/svg/sprite/*.svg` )
-        .pipe( svgStore({ inlineSvg: true }) )
-        .pipe( rename('icon-sprite.svg') )
-        .pipe( gulp.dest(`${dir.dist}img/svg`) );
-
-});
-
-// sprite template function to allow modification of params before mustache compilation
-/*function spriteTemplate(params) {
-    // get template file
-
-    // Modify sprite names, remove '@2x' resolution specifiers which break SASS var names
-    params.items.forEach(function(item){
-        item.name = item.name.replace(/@\dx/, '');
-    });
-
-    // read in template form file, render with params and return the resulting string
-    return mustache.render( fs.readFileSync(params.options.templateFile, 'utf8'), params);
-}*/
-
-/*
-gulp.task('sprites', () => {
-
-    // normal sprites
-    let sprites = gulp.src([ `${dir.src}img/icons/png/!(*@[0-9]x).png`])
-        .pipe(
-            spritesmith({
-                imgName     : 'sprites-1x.png',
-                cssName     : '_sprite-data-1x.scss',
-                padding     : 4,
-                algorithm   : 'binary-tree',
-                cssTemplate : spriteTemplate,
-                cssOpts: {
-                    res : '1x',
-                    imageDir : '../img/', // relative path to sprites from generated CSS
-                    templateFile : '_sprite-template.scss'
-                }
-            })
-        );
-
-    sprites.css.pipe( gulp.dest( `${dir.src}scss/vars/` ) );
-    sprites.img.pipe( gulp.dest( `${dir.dist}img` ) );
-
-    let retinaSprites = gulp.src([ `${dir.src}img/icons/png/!(*@[0-9]x)@2x.png` ])
-        .pipe(
-            spritesmith({
-                imgName     : 'sprites-2x.png',
-                cssName     : '_sprite-data-2x.scss',
-                padding     : 4,
-                algorithm   : 'binary-tree',
-                cssTemplate : spriteTemplate,
-                cssOpts: {
-                    res : '2x',
-                    imageDir : '../img/', // relative path to sprites from generated CSS
-                    templateFile : '_sprite-template.scss'
-                }
-            })
-        );
-
-    retinaSprites.css.pipe( gulp.dest( `${dir.src}scss/vars/` ) );
-    retinaSprites.img.pipe( gulp.dest( `${dir.dist}img` ) );
-
-    // merge streams to know when both have finished
-    return merge( sprites, retinaSprites );
-
-});
-*/
-
-
 /*
 
     OTHER
@@ -390,10 +274,8 @@ gulp.task('sprites', () => {
 gulp.task('copy-static', () => {
 
     gulp.src([
-        `${dir.src}fonts/*.*`,
         `${dir.src}js/modernizr.js`,
-        `${dir.src}img/static/**/*.*`,
-        `${dir.src}img/mails/**/*.*`
+        `${dir.src}images/*.*`
     ], {base: dir.src})
     .pipe( gulp.dest(dir.dist) );
 
@@ -408,8 +290,7 @@ gulp.task('clean', () => {
     return del([
         `${dir.dist}js/**/*.*`,
         `${dir.dist}css/**/*.*`,
-        `${dir.dist}img/**/*.*`,
-        `${dir.dist}fonts/**/*.*`,
+        `${dir.dist}img/**/*.*`
     ], {force: true});
 });
 
@@ -423,7 +304,7 @@ gulp.task('clean', () => {
 gulp.task('browser-sync', () => {
 
     browserSync.init({
-        proxy : 'http://vancleef.dev',
+        proxy : 'http://bonneteau.my',
         port : 6600,
         browser: "google chrome",
         open: true,
@@ -436,17 +317,11 @@ gulp.task('browser-sync', () => {
 
 gulp.task('watch', ['browser-sync'], () => {
 
-    // ES5 scripts
-    // bundleScripts(true);
-
     // ES6 Scripts
     gulp.watch(`${dir.src}js/**/*.js`, ['scripts-es6']);
 
     // Styles
     gulp.watch(`${dir.src}scss/**/*.scss`, ['styles']);
-
-    // Images
-    gulp.watch(`${dir.src}img/svg/**/*.svg`, ['svg-sprite']);
 
 });
 
@@ -463,32 +338,6 @@ gulp.task('default', sequence(
 
     ],
     [
-        // 'sprites',
         'styles'
-    ],
-    [
-        'svg-min',
-        'svg-sprite'
-    ]
-));
-
-gulp.task('prod', sequence(
-    'clean',
-    'copy-static',
-    [
-        'polyfills',
-        'modernizr',
-        'scripts',
-        'scripts-es6',
-        'min-scripts',
-        'min-scripts-es6'
-    ],
-    [
-        // 'sprites',
-        'styles'
-    ],
-    [
-        'svg-min',
-        'svg-sprite'
     ]
 ));
