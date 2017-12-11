@@ -4,6 +4,8 @@ import anime from "animejs";
 import WindowManager from 'zimplist/utils/WindowManager';
 import Config from 'zimplist/utils/Config';
 
+import pageList from 'app/pages/pageList';
+
 // Create main object
 const BONNETEAU = {
     start() {
@@ -62,7 +64,6 @@ const BONNETEAU = {
         }).then( (responseData) => {
             let documentEl = stringToElement( responseData );
 
-            // TODO Change page title
             let pageEl = documentEl.querySelector('.page');
 
             let page = this.initPage( pageEl );
@@ -78,11 +79,6 @@ const BONNETEAU = {
         // get unique string that id's the page
         let pageId = pageEl.getAttribute('data-page-id');
 
-        // Append page element before
-        if (pageId !== 'home') {
-            this.pageDraw.injectPageEl( pageEl );
-        }
-
         // Get an instance for the class attributed for this page
         let pageObj;
         if ( pageList[pageId] ) {
@@ -92,13 +88,7 @@ const BONNETEAU = {
             console.error(`Can't find page class for id: ${pageId}`);
         }
 
-        if ( pageId === 'home') {
-            this.currentPage = pageObj;
-            this.closePageDraw();
-        } else {
-            this.currentDrawPage = pageObj;
-            this.openPageDraw();
-        }
+        this.currentPage = pageObj;
 
         return pageObj;
     }
